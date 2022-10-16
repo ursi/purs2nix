@@ -2,7 +2,7 @@
 
 **purs-nix** is a nix library used to set up your PureScript environment and/or to compile/bundle your PureScript code in a Nix derivation. The `outputs` of the flake has a `__functor` attribute, so it can be used as a function. It takes the following arguments:
 
-```
+```nix
 { system }
 ```
 and returns an attribute set with the following attributes:
@@ -18,7 +18,7 @@ and returns an attribute set with the following attributes:
 
 `purs` takes the following arguments:
 
-```
+```nix
 { dependencies ? []
 , test-dependencies ? []
 , dir ? null
@@ -42,15 +42,15 @@ and returns an attribute set with the following attributes:
 - `foreign`: See the [documentation](foreign.md).
 
 and returns an attribute set with the following attributes:
-- <span id="user-content-purs-modules">`modules`</span>: An attribute set with an attribute for each local module in your project. Use this to incorporate your PureScript project into bigger nix builds. Read more [here](derivations.md).
+- [`modules`]{#user-content-purs-modules}: An attribute set with an attribute for each local module in your project. Use this to incorporate your PureScript project into bigger nix builds. Read more [here](derivations.md).
 - `command`: A functions that builds the `purs-nix` command which you can then add to your Nix shell.
-- <span id="user-content-purs-test">`test`</span>: An attribute set with functions for derivations corresponding to the test module. Read more [here](derivations.md).
+- [`test`]{#user-content-purs-modules}: An attribute set with functions for derivations corresponding to the test module. Read more [here](derivations.md).
 - `dependencies`: A list of all the dependencies (transitive closure) of your project. This is exposed out of convenience for when you find yourself using a tool that needs information that can be derived from this.
 
 ### command
 `command` takes the following arguments: (Note: they all have defaults so often times you will only need to us `command {}`)
 
-```
+```nix
 { srcs ? see below
 , output ? "output"
 , bundle ? {}
@@ -66,7 +66,7 @@ and returns an attribute set with the following attributes:
 - `output`: The name of the folder that `purs compile` will create.
 - `bundle`: The options that will configure the `purs-nix bundle` command.
 
-  ```
+  ```nix
   { esbuild # additional esbuild flags
     ? { format ? "esm"
       , log-level ? "warning"
@@ -79,7 +79,7 @@ and returns an attribute set with the following attributes:
 
 - `compile`: The options that will configure the `purs compile` command.
 
-  ```
+  ```nix
   { verbose-errors ? false
   , comments ? false
   , codegen ? null
@@ -90,7 +90,7 @@ and returns an attribute set with the following attributes:
 
 - `package`: The options that will be used to generate a `bower.json` with `purs-nix bower`.
 
-  ```
+  ```nix
   { dependencies
   , pursuit
   }
@@ -98,7 +98,7 @@ and returns an attribute set with the following attributes:
     - `dependencies`: A list of your project's dependencies.
 	- `pursuit`: An attribute set of all the additional information required to make a `bower.json` in order to publish to Pursuit.
 
-	  ```
+	  ```nix
 	  { name
 	  , repo
 	  , license
