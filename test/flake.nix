@@ -399,8 +399,8 @@
                           info="name:    effect
                           version: override-test
                           repo:    https://github.com/purs-nix/test-packages.git
-                          path:    /nix/store/lvic9hidqlk859fsmfksrxsy9swp2gk5-4n1s3a8183r7zrl0xwyxpya0z59ym7gj-source
-                          source:  /nix/store/r2qinwklq6yghdcz0qxc8zq2p04dq3w6-effect-override-test"
+                          path:    /nix/store/4n1s3a8183r7zrl0xwyxpya0z59ym7gj-source
+                          source:  /nix/store/nllpdqzb9hl375wmgq29gidr92d39szg-effect-override-test"
 
 
                           [[ ${i} == $info ]]

@@ -152,9 +152,9 @@ in
 
               if [[ -e ${module-path} ]]; then
                 ${
-                  if value ? node_modules then
+                  if u.has value "node_modules" then
                     "ln -fsT ${value.node_modules} ${module-path}/node_modules"
-                  else if value ? src then
+                  else if u.has value "src" then
                     ''
                       if [[ -h ${module-path} ]]; then
                         echo "Error: You're trying to add foreign dependencies to the module '${name}', but that module is not part of this project. Add the foreign dependencies to the package that contains '${name}'."
@@ -352,7 +352,7 @@ in
                 inherit (info) dependencies;
                 name = "${info.name}";
                 local-globs = "${package}/**/*.purs";
-                foreign = info.foreign or { };
+                foreign = if u.has info "foreign" then info.foreign else { };
               }
               args;
         in
