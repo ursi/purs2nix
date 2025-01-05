@@ -2,6 +2,8 @@ p:
 with builtins;
 let l = p.lib; in
 rec {
+  has = set: attr: set ? ${attr} && set.${attr} != null;
+  hasByPath = set: path: l.hasAttrByPath path set && l.getAttrFromPath path set != null;
   bundle =
     { entry-point
     , esbuild ? { }
@@ -122,14 +124,14 @@ rec {
     let
       info = pkg.purs-nix-info;
       source-info =
-        if info ? flake then
+        if has info "flake" then
           ''
             echo "flake:   ${info.flake.url}"
             echo "package: ${info.flake.package or "default"}"''
-        else if info ? repo then
+        else if has info "repo" then
           let
             more-info =
-              if info ? rev
+              if has info "rev"
               then ''echo "commit:  ${info.rev}"''
               else ''echo "path:    ${pkg.src}"'';
           in

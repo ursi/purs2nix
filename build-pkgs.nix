@@ -5,92 +5,42 @@ let
   p = pkgs;
   u = utils;
 
-  build = { name, ... }@args:
-    if l.hasAttrByPath [ "src" "flake" ] args then
+  build = pre-eval-args:
+    let
+      check-arg = "_accepts-future-args-check";
+      info-args = {
+        inherit build ps-pkgs ps-pkgs-ns;
+        inherit (l) licenses;
+
+        # make sure the function can accept new arguments in the future
+        ${check-arg} = null;
+      };
+
+      args = (l.evalModules {
+        modules = [
+          pre-eval-args
+          (import ./package-description.nix { inherit check-arg info-args p u; })
+        ];
+      }).config;
+
+      inherit (args) name;
+    in
+    if u.has args.src "flake" then
       l.recursiveUpdate
         (getFlake args.src.flake.url).packages.${p.system}.${args.src.flake.package or "default"}
         { purs-nix-info = { inherit name; } // args.src; }
     else
       let
-        legacy =
-          l.warnIf (args?repo)
-            ''
-              Package: "${name}" is being specified with a deprecated API.
-              see: https://github.com/purs-nix/purs-nix/blob/ps-0.15/docs/adding-packages.md
-            ''
-            (args?repo);
-
-        ref =
-          let
-            get-ref =
-              a: b: a.ref or (if b ? version then "refs/tags/v" + b.version else null);
-          in
-          if legacy
-          then get-ref args args
-          else get-ref args.src.git args.info;
-
-        info' = args.info or null;
-
-        src =
-          let
-            fetch-git =
-              { repo, rev, ... }:
-              fetchGit
-                ({
-                  url = repo;
-                  inherit rev;
-                } // (if ref == null then { } else { inherit ref; }));
-          in
-          if legacy then
-            fetch-git args
-          else
-            let src' = args.src; in
-            if src' ? git then
-              fetch-git src'.git
-            else if src' ? path then
-              filterSource
-                (path: type:
-                  type == "directory"
-                  || l.hasSuffix ".purs" path
-                  || l.hasSuffix ".js" path
-                  || (if isPath info' then l.hasSuffix (toString args.info) path else false))
-                src'.path
-            else
-              abort "'src' has no 'flake', 'git', or 'path' attribute";
-
-        info =
-          if isPath info' then
-            let
-              check-arg = "_accepts-future-args-check";
-              f = import (src + toString info');
-            in
-            if (l.functionArgs f) ? ${check-arg} then
-              abort "${name}: The info function expects a '${check-arg}' attribute. The purpose of this attribute is to ensure the info function will not break if new arguments are added. If you're encountering this error, it's likely the fix you're looking for is to use the `...` syntax."
-            else
-              f {
-                inherit build ps-pkgs ps-pkgs-ns;
-                inherit (l) licenses;
-
-                # make sure the function can accept new arguments in the future
-                ${check-arg} = null;
-              }
-          else if legacy then
-            args
-          else
-            args.info;
-
-        dependencies = info.dependencies or [ ];
-        ps-src = info.src or "src";
-        version = info.version or null;
+        inherit (args.ro) info;
 
         add-optional = attribute:
-          if info ? ${attribute}
+          if u.has info attribute
           then { ${attribute} = info.${attribute}; }
           else { };
       in
       p.stdenv.mkDerivation
         ({
-          inherit src;
+          inherit (args.ro) src;
           phases = [
             "unpackPhase"
             "installPhase"
@@ -113,23 +63,19 @@ let
                           a.overlays ++ [ (_: _: a.current) ] ++ acc.overlays;
                       });
 
-                a = f { current = { }; overlays = [ ]; } dependencies;
+                a = f { current = { }; overlays = [ ]; } info.dependencies;
                 inherit (a) current overlays;
               in
               l.composeManyExtensions (overlays ++ [ (_: _: current) ]);
 
             purs-nix-info = {
-              inherit dependencies name;
-              src = ps-src;
+              inherit name;
+              inherit (info) dependencies src;
             }
             // (
-              if legacy then
-                { inherit (args) repo rev; }
-              else if args.src ? git then
+              if u.has args.src "git" then
                 { inherit (args.src.git) repo rev; }
-              else if
-                l.hasAttrByPath [ "pursuit" "repo" ] info
-              then
+              else if u.hasByPath info [ "pursuit" "repo" ] then
                 { inherit (info.pursuit) repo; }
               else
                 { }
@@ -139,10 +85,9 @@ let
             // add-optional "pursuit";
           };
 
-          installPhase =
-            (if legacy then args else info).install or "ln -s $src/${ps-src} $out";
+          installPhase = info.install;
         }
-        // u.make-name name version);
+        // u.make-name name info.version);
 
   build-set =
     f: l.fix (self: mapAttrs (n: v: build (v // { name = n; })) (f self));

@@ -113,13 +113,13 @@ let
         a:
         ''echo "You need to define 'package.${a}' in the set you pass to 'command' to use this command". Make sure to re-enter the Nix shell after you fix this.'';
     in
-    if !package ? pursuit then
+    if !(u.has package "pursuit") then
       make-error "pursuit"
-    else if !package.pursuit ? name then
+    else if !(u.has package.pursuit "name") then
       make-error "pursuit.name"
-    else if !package.pursuit ? license then
+    else if !(u.has package.pursuit "license") then
       make-error "pursuit.license"
-    else if !package.pursuit ? repo then
+    else if !(u.has package.pursuit "repo") then
       make-error "pursuit.repo"
     else
       let
@@ -155,7 +155,15 @@ let
                 (pkg:
                   let
                     info = u.dep-info ps-pkgs pkg;
-                    registry-name = "purescript-${info.pursuit.name or info.name}";
+                    registry-name =
+                      let
+                        name =
+                          if u.hasByPath info [ "pursuit" "name" ] then
+                            info.pursuit.name
+                          else
+                            info.name;
+                      in
+                      "purescript-${name}";
                   in
                   l.nameValuePair registry-name
                     (if bower-packages-registry ? ${registry-name} && info ? version then
