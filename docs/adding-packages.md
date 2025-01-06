@@ -1,5 +1,9 @@
 ```nix
-{ name = "The name of the package. When defining a package in an overlay, this value will be filled in automatically from the name of the attribute in the overlay";
+{ name = ''
+    The name of the package. When defining a package in an overlay,
+    this value will be filled in automatically from the name of the
+    attribute in the overlay
+  '';
 
   src = ''
     The source of the package. This can be specified in the following ways:
