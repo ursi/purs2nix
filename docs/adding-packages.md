@@ -21,7 +21,7 @@
                   { url = "A flake URL";
                     package = '''
                       default: "default"
-                      The name of the package in the flake that that is the PureScript package
+                      The name of the package in the flake that is the PureScript package
                     ''';
               }
 
