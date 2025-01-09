@@ -6,6 +6,21 @@ let
   t = l.types;
   inherit (l) mkOption;
 
+  oneOfSubmodule = submodules:
+    t.addCheck
+      (t.submodule {
+        options =
+          mapAttrs
+            (_: v:
+              v // {
+                type = t.nullOr v.type;
+                default = null;
+              }
+            )
+            submodules;
+      })
+      (s: length (attrNames s) == 1 && attrVals s != [ null ]);
+
   info = t.submodule {
     options = {
       version = mkOption {
@@ -30,6 +45,23 @@ let
         description = "How to install the package from the source";
         type = t.str;
         default = "ln -s $src/${l.escapeShellArg config.ro.info.src} $out";
+      };
+
+      foreign = mkOption {
+        description = "How to install the package from the source";
+        type = t.nullOr (t.attrsOf (oneOfSubmodule {
+          node_modules = mkOption {
+            description = "abc";
+            type = t.path;
+          };
+
+          src = mkOption {
+            description = "abc";
+            type = t.path;
+          };
+        }));
+
+        default = null;
       };
 
       pursuit = mkOption {
@@ -68,62 +100,53 @@ in
 
     src = mkOption {
       description = "package source";
-      type = t.addCheck
-        (t.submodule {
-          options = {
-            git = mkOption {
-              description = "git source";
-              type = t.nullOr (t.submodule {
-                options = {
-                  repo = mkOption {
-                    description = "git repo URL";
-                    type = t.str;
-                  };
+      type = oneOfSubmodule {
+        git = mkOption {
+          description = "git source";
+          type = t.submodule {
+            options = {
+              repo = mkOption {
+                description = "git repo URL";
+                type = t.str;
+              };
 
-                  rev = mkOption {
-                    description = "git commit hash";
-                    type = t.str;
-                  };
+              rev = mkOption {
+                description = "git commit hash";
+                type = t.str;
+              };
 
-                  ref = mkOption {
-                    description = "git ref";
-                    type = t.nullOr t.str;
-                    default = null;
-                  };
-                };
-              });
-
-              default = null;
-            };
-
-            flake = mkOption {
-              description = "flake source";
-              type = t.nullOr (t.submodule {
-                options = {
-                  url = mkOption {
-                    description = "flake URL";
-                    type = t.str;
-                  };
-
-                  package = mkOption {
-                    description = "the flake package corresponding to the PureScript package";
-                    type = t.str;
-                    default = "default";
-                  };
-                };
-              });
-
-              default = null;
-            };
-
-            path = mkOption {
-              description = "a path for the package";
-              type = t.nullOr t.path;
-              default = null;
+              ref = mkOption {
+                description = "git ref";
+                type = t.nullOr t.str;
+                default = null;
+              };
             };
           };
-        })
-        (s: length (attrNames s) == 1 && attrVals s != [ null ]);
+        };
+
+        flake = mkOption {
+          description = "flake source";
+          type = t.submodule {
+            options = {
+              url = mkOption {
+                description = "flake URL";
+                type = t.str;
+              };
+
+              package = mkOption {
+                description = "the flake package corresponding to the PureScript package";
+                type = t.str;
+                default = "default";
+              };
+            };
+          };
+        };
+
+        path = mkOption {
+          description = "a path for the package";
+          type = t.path;
+        };
+      };
     };
 
     info = mkOption {
